@@ -18,7 +18,7 @@ class Campaign:
         cv: float = 0.1,
         seasonality_cv: float = 0.2,
         conversion_delay: float = 0.3,
-        elasticity: float = 0.9,  # Changed to positive for elasticity_coef > 0
+        elasticity: float = 0.9,
         baseline: float = 1000,
         is_organic: bool = False,
     ):
