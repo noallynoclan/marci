@@ -13,6 +13,7 @@ def style(
     title: Optional[str] = None,
     font_size: int = 10,
     legend: bool = True,
+    legend_loc: Optional[str] = None,
 ) -> Axes:
     """
     Style a matplotlib axes with proper formatting for different data types.
@@ -81,7 +82,15 @@ def style(
     ax.grid(True, alpha=0.3)
     # Handle legend
     if legend:
-        ax.legend(fontsize=font_size, frameon=False)
+        if legend_loc == "r":
+            ax.legend(
+                fontsize=font_size,
+                frameon=False,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+            )
+        else:
+            ax.legend(fontsize=font_size, frameon=False)
 
     fig = ax.get_figure()
     fig.tight_layout()

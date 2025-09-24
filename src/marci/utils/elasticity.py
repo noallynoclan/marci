@@ -72,12 +72,12 @@ class Elasticity:
         if self.use_limit:
             with np.errstate(divide="ignore", invalid="ignore"):
                 roas = 1 / (self.k + (1 - self.k) * x)
-                roas = np.where(x == 0, np.nan, roas)
+                roas = np.where(x == 0, self.margin_return(0), roas)
             return roas
 
         with np.errstate(divide="ignore", invalid="ignore"):
             roas = self.total_return(x) / x
-            roas = np.where(x == 0, np.nan, roas)
+            roas = np.where(x == 0, self.margin_return(0), roas)
         return roas
 
     def plot(self, ax=None, max_x: float = 4, num: int = 200):
@@ -86,6 +86,9 @@ class Elasticity:
             fig, ax = plt.subplots(figsize=(7, 5))
 
         x = np.linspace(0, max_x, num)
+        ax.plot([0, 2], [2, 0], lw=1, ls="--", color="gray")
+        ax.plot([0, max_x], [1, 1], lw=1, ls="--", color="gray")
+        ax.plot([0, max_x], [0, max_x], lw=1, ls="--", color="gray")
         ax.plot(
             x, self.total_return(x), label="Total Returns", lw=2, color="dodgerblue"
         )
@@ -96,6 +99,7 @@ class Elasticity:
             lw=2,
             color="orangered",
         )
+
         ax.plot(x, self.roas(x), label="ROAS", lw=2, color="limegreen")
 
         style(
@@ -103,7 +107,7 @@ class Elasticity:
             "%",
             "%",
             "Budget",
-            title="Elasticity Curve",
+            title="Elasticity Curves",
         )
 
         return ax

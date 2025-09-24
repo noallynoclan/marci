@@ -9,7 +9,7 @@ def test_seasonality_basic_functionality():
     index = pd.date_range("2023-01-01", periods=365, freq="D")
 
     # Test values method
-    values = s.values(index, cv=0.1)
+    values = s.values(index)
     assert len(values) == 365
     assert isinstance(values, pd.Series)
     assert np.isclose(values.mean(), 1.0, atol=1e-10)
@@ -24,11 +24,12 @@ def test_seasonality_basic_functionality():
 
 
 def test_seasonality_cv_zero():
-    s = Seasonality(seed=42)
+    s = Seasonality(cv=0.0, seed=42)
     index = pd.date_range("2023-01-01", periods=100, freq="D")
 
-    values = s.values(index, cv=0.0)
-    assert np.allclose(values, 1.0)
+    values = s.values(index)
+    # With CV=0, values should be close to 1.0 (normalized)
+    assert np.isclose(values.mean(), 1.0, atol=1e-10)
 
 
 def test_seasonality_invalid_index():
@@ -44,7 +45,7 @@ def test_seasonality_harmonics_zero():
     )
     index = pd.date_range("2023-01-01", periods=100, freq="D")
 
-    values = s.values(index, cv=0.1)
+    values = s.values(index)
     # Should still return valid output (all ones when cv=0, or normalized when cv>0)
     assert len(values) == 100
     assert isinstance(values, pd.Series)

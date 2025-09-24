@@ -1,6 +1,6 @@
 from ._version import __version__
 from .campaigns import Campaign
-from .utils import antidiag_sums, Distribution, Lognormal, Elasticity, Conversion_Delay, Seasonality, style
+from .utils import antidiag_sums, Distribution, Lognormal, Elasticity, Conversion_Delay, Seasonality, Portfolio, style
 
 __all__ = [
 	"__version__",
@@ -10,6 +10,7 @@ __all__ = [
 	"Elasticity",
 	"Conversion_Delay",
 	"Seasonality",
+	"Portfolio",
 	"Campaign",
 	"style",
 ]

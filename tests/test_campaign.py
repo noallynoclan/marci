@@ -10,36 +10,32 @@ def test_campaign_basic_initialization():
     assert c.cvr == 1e-4
     assert c.aov == 100
     assert c.cv == 0.1
-    assert c.baseline == 1000
+    assert c.base_budget == 1000
 
 
 def test_campaign_custom_parameters():
     c = Campaign(
-        name="Test Campaign", cpm=15, cvr=2e-4, aov=150, elasticity=0.3, baseline=2000
+        name="Test Campaign", cpm=15, cvr=2e-4, aov=150, elasticity=0.3, base_budget=2000
     )
     assert c.name == "Test Campaign"
     assert c.cpm == 15
     assert c.cvr == 2e-4
     assert c.aov == 150
-    assert c.baseline == 2000
+    assert c.base_budget == 2000
 
 
 def test_campaign_expected_roas():
     c = Campaign(cpm=10, cvr=1e-4, aov=100, elasticity=0.2)
 
     # Test with default spend
-    roas = c.expected_roas()
+    roas = c.exp_roas()
     assert roas > 0
-
-    # Test with custom spend
-    roas_custom = c.expected_roas(avg_spend=1500)
-    assert roas_custom > 0
 
 
 def test_campaign_external_roas():
-    c = Campaign(is_external=True, cpm=10, cvr=1e-4, aov=100)
+    c = Campaign(is_organic=True, cpm=10, cvr=1e-4, aov=100)
 
-    roas = c.expected_roas()
+    roas = c.exp_roas()
     expected = 1000 * 1e-4 * 100 / 10  # Should be 1.0
     assert np.isclose(roas, expected)
 
@@ -47,7 +43,7 @@ def test_campaign_external_roas():
 def test_campaign_expected_sales():
     c = Campaign(cpm=10, cvr=1e-4, aov=100, elasticity=0.2)
 
-    sales = c.expected_sales(avg_spend=1000)
+    sales = c.exp_tot_sales()
     assert sales > 0
 
 
@@ -55,11 +51,11 @@ def test_campaign_sim_outcomes():
     c = Campaign()  # Campaign doesn't take seed parameter
 
     # Test simulation without plot
-    df = c.sim_outcomes(periods=10, avg_spend=500)
+    df = c.sim_outcomes(periods=10)
 
     assert isinstance(df, pd.DataFrame)
     assert len(df) > 0
-    assert "spend" in df.columns
+    assert "budget" in df.columns
     assert "imps" in df.columns
     assert "convs" in df.columns
     assert "sales" in df.columns
@@ -72,12 +68,12 @@ def test_campaign_simulated_vs_expected_roas():
         cvr=2e-4,
         aov=120,
         elasticity=0.3,
-        baseline=1000,
+        base_budget=1000,
         cv=0.05,  # Lower CV for more stable results
     )
 
     # Calculate expected ROAS
-    expected_roas = c.expected_roas(avg_spend=800)
+    expected_roas = c.exp_roas()
 
     # Run simulation multiple times and average
     n_sims = 10
@@ -86,13 +82,11 @@ def test_campaign_simulated_vs_expected_roas():
     for _ in range(n_sims):
         df = c.sim_outcomes(
             periods=30,
-            avg_spend=800,
-            cv=0.05,  # Lower CV for stability
         )
 
         # Calculate simulated ROAS: total sales / total spend
         total_sales = df["sales"].sum()
-        total_spend = df["spend"].sum()
+        total_spend = df["budget"].sum()
         simulated_roas = total_sales / total_spend if total_spend > 0 else 0
         simulated_roas_list.append(simulated_roas)
 

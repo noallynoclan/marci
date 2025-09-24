@@ -32,8 +32,8 @@ def test_elasticity_with_saturation():
     assert tr.shape == x.shape
     assert roas_vals.shape == x.shape
 
-    # ROAS at x=0 should be NaN
-    assert np.isnan(roas_vals[0])
+    # ROAS at x=0 should be finite (not NaN)
+    assert np.isfinite(roas_vals[0])
 
     # Values should be finite for x > 0
     assert np.all(np.isfinite(mr[1:]))

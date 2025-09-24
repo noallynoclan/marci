@@ -5,11 +5,10 @@ import pandas as pd
 
 
 class Seasonality:
-    # fixed, internal anchor — not a parameter
-    _ANCHOR = pd.Timestamp("2000-01-01")
-
     def __init__(
         self,
+        cv=0.2,
+        anchor_date="2000-01-01",
         weekly_harmonics=4,
         monthly_harmonics=1,
         annual_harmonics=5,
@@ -20,6 +19,8 @@ class Seasonality:
         month_days=30.4375,
         year_days=365.2425,
     ):
+        self.cv = cv
+        self.anchor_date = pd.Timestamp(anchor_date)
         self.Kw, self.Km, self.Ky = map(
             int, (weekly_harmonics, monthly_harmonics, annual_harmonics)
         )
@@ -42,6 +43,34 @@ class Seasonality:
         self.am, self.bm = ab(self.Km)
         self.ay, self.by = ab(self.Ky)
 
+        # Pre-calculate seasonalities for a 4-year cycle (1461 days incl. leap year) to normalize
+        self._precalculate_seasonalities()
+
+    def _precalculate_seasonalities(self):
+        """Pre-calculate seasonalities for a 4-year cycle and normalize to mean=1 with target CV.
+
+        Using 1461 days (365*4 + 1 leap day) starting at a leap cycle boundary ensures
+        that leap-year effects are represented in the base normalization.
+        """
+        cycle_start = pd.Timestamp("2000-01-01")  # leap-year cycle anchor
+        cycle_days = 365 * 4 + 1
+        cycle_index = pd.date_range(cycle_start, periods=cycle_days, freq="D")
+
+        # Calculate raw seasonalities
+        y = self._raw(cycle_index)
+
+        if self.cv == 0:
+            self._normalized_seasonalities = np.ones(cycle_days)
+            return
+
+        # Normalize to have mean=1 and target CV on the 4-year cycle
+        mu = float(y.mean())
+        sd = float(y.std(ddof=0)) or 1.0
+        z = (y - mu) / sd
+        normalized = 1 + z * self.cv
+
+        self._normalized_seasonalities = normalized
+
     def _fourier(self, t, period, K, a, b, weight):
         if (K is None) or (K <= 0) or (weight == 0):
             return np.zeros_like(t, dtype=float)
@@ -53,7 +82,7 @@ class Seasonality:
 
     def _raw(self, index: pd.DatetimeIndex) -> np.ndarray:
         # GLOBAL phase anchored to fixed epoch
-        t = ((index - self._ANCHOR) / pd.Timedelta(days=1)).to_numpy(dtype=float)
+        t = ((index - self.anchor_date) / pd.Timedelta(days=1)).to_numpy(dtype=float)
         y = (
             self._fourier(t, self.W, self.Kw, self.aw, self.bw, self.ww)
             + self._fourier(t, self.M, self.Km, self.am, self.bm, self.wm)
@@ -61,28 +90,27 @@ class Seasonality:
         )
         return y
 
-    def values(self, index: pd.DatetimeIndex, cv=0.1) -> pd.Series:
+    def values(self, index: pd.DatetimeIndex) -> pd.Series:
+        """Return seasonalities for timeframe; re-normalize so window mean = 1.
+
+        Uses precomputed 4-year normalized seasonalities and wraps by 1461 days,
+        then rescales multiplicatively so the returned series has mean exactly 1.
+        """
         if not isinstance(index, pd.DatetimeIndex):
             raise TypeError("index must be a pandas.DatetimeIndex")
 
-        y = self._raw(index)
+        cycle_start = pd.Timestamp("2000-01-01")
+        days_from_start = ((index - cycle_start) / pd.Timedelta(days=1)).astype(int)
+        cycle_days = 1461
+        cycle_idx = days_from_start % cycle_days
 
-        if cv == 0:
-            return pd.Series(np.ones(len(index)), index=index)
+        vals = self._normalized_seasonalities[cycle_idx]
 
-        # local normalization (z-scores)
-        mu = float(y.mean())
-        sd = float(y.std(ddof=0)) or 1.0
-        z = (y - mu) / sd
+        # Ensure mean = 1 over the requested window
+        mean_val = float(np.mean(vals)) or 1.0
+        vals = vals / mean_val
 
-        # lognormal mapping
-        s = np.sqrt(np.log1p(cv**2))
-        out = np.exp(z * s - 0.5 * s**2)
-
-        # enforce exact mean=1 (rescale multiplicatively)
-        out /= out.mean()
-
-        return pd.Series(out, index=index)
+        return pd.Series(vals, index=index)
 
     def raw_standardized(self, index: pd.DatetimeIndex) -> pd.Series:
         """Optional helper: window-local z-scored raw trend (mean 0, std 1)."""
