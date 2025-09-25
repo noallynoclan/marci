@@ -109,8 +109,8 @@ def safe_binomial(n, p, size=None, rng=None):
 
 class Distribution(ABC):
     def __init__(self, mean: float, cv: float, name: str = "") -> None:
+        mean, cv = self.handle_small_mean_cv(mean, cv, name)
         self.name = name
-        mean, cv = self.handle_small_mean_cv(mean, cv)
         self.mean: Final[float] = float(mean)
         self.cv: Final[float] = float(cv)
         self.std: Final[float] = float(mean * cv)
@@ -131,15 +131,15 @@ class Distribution(ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name}, mean={self.mean}, cv={self.cv})"
 
-    def handle_small_mean_cv(self, mean, cv, max_mean=None):
+    def handle_small_mean_cv(self, mean, cv, name="", max_mean=None):
         mean = float(mean)
         cv = float(cv)
         if mean < TOL:
-            print(f"{self.__class__.__name__}({self.name}, mean={mean}, cv={cv})")
-            print(f"mean is too small, setting to {TOL} for stability")
+            print(f"{self.__class__.__name__}({name}, mean={mean}, cv={cv})")
+            print(f"Mean is too small, setting to {TOL} for stability")
             mean = TOL
         if max_mean is not None and mean > max_mean:
-            print(f"mean is too large, setting to {max_mean} for stability")
+            print(f"Mean is too large, setting to {max_mean} for stability")
             mean = max_mean
         if cv < TOL:
             cv = TOL
@@ -174,7 +174,6 @@ class Distribution(ABC):
 
 class Lognormal(Distribution):
     def __init__(self, mean: float, cv: float, name: str = "") -> None:
-        self.name = name
         mean, cv = self.handle_small_mean_cv(mean, cv)
         super().__init__(mean, cv, name)
         self.sigma: Final[float] = float(np.sqrt(np.log(1.0 + self.cv**2)))
@@ -194,7 +193,6 @@ class Lognormal_Ratio(Distribution):
     def __init__(
         self, A_mean: float, A_cv: float, B_mean: float, B_cv: float, name: str = ""
     ) -> None:
-        self.name = name
         A_mean, A_cv = self.handle_small_mean_cv(A_mean, A_cv)
         B_mean, B_cv = self.handle_small_mean_cv(B_mean, B_cv)
         mean = A_mean / B_mean * (1 + B_cv**2)
@@ -211,7 +209,6 @@ class Lognormal_Ratio(Distribution):
 
 class Poisson(Distribution):
     def __init__(self, mean: float, name: str = "") -> None:
-        self.name = name
         mean, cv = self.handle_small_mean_cv(mean, 1 / np.sqrt(mean))
         super().__init__(mean, cv, name)
         self.lambda_ = mean
@@ -224,7 +221,6 @@ class Poisson_Lognormal(Distribution):
     def __init__(
         self, lognormal_mean: float, lognormal_cv: float, name: str = ""
     ) -> None:
-        self.name = name
         mean, cv = self.handle_small_mean_cv(lognormal_mean, lognormal_cv)
         self.lambda_ = Lognormal(mean=mean, cv=cv, name=name)
         super().__init__(
@@ -245,7 +241,6 @@ class Poisson_Lognormal_Ratio(Distribution):
     def __init__(
         self, A_mean: float, A_cv: float, B_mean: float, B_cv: float, name: str = ""
     ) -> None:
-        self.name = name
         A_mean, A_cv = self.handle_small_mean_cv(A_mean, A_cv)
         B_mean, B_cv = self.handle_small_mean_cv(B_mean, B_cv)
         self.lambda_ = Lognormal_Ratio(
@@ -267,7 +262,6 @@ class Poisson_Lognormal_Ratio(Distribution):
 
 class Binomial(Distribution):
     def __init__(self, mean: float, cv: float, name: str = "") -> None:
-        self.name = name
         mean, cv = self.handle_small_mean_cv(mean, cv)
         super().__init__(mean, cv, name)
         self.n = mean / (1 - mean * cv**2)
@@ -279,7 +273,6 @@ class Binomial(Distribution):
 
 class Beta(Distribution):
     def __init__(self, mean: float, cv: float, name: str = "") -> None:
-        self.name = name
         mean, cv = self.handle_small_mean_cv(mean, cv, max_mean=1 - TOL)
         super().__init__(mean, cv, name)
 
@@ -301,7 +294,6 @@ class Binomial_Poisson_Beta(Distribution):
     def __init__(
         self, poisson_mean: float, beta_mean: float, beta_cv: float, name: str = ""
     ) -> None:
-        self.name = name
         self.poisson = Poisson(mean=poisson_mean)
         self.beta = Beta(mean=beta_mean, cv=beta_cv)
         mean = self.poisson.mean * self.beta.mean
@@ -326,7 +318,6 @@ class Binomial_Poisson_Lognormal_Beta(Distribution):
         beta_cv: float,
         name: str = "",
     ) -> None:
-        self.name = name
         self.poisson_lognormal = Poisson_Lognormal(
             lognormal_mean=lognormal_mean, lognormal_cv=lognormal_cv, name=name
         )
@@ -363,7 +354,6 @@ class Binomial_Poisson_Lognormal_Ratio_Beta(Distribution):
         beta_cv: float,
         name: str = "",
     ) -> None:
-        self.name = name
         self.poisson_lognormal_ratio = Poisson_Lognormal_Ratio(
             A_mean=A_mean, A_cv=A_cv, B_mean=B_mean, B_cv=B_cv, name=name
         )
@@ -399,7 +389,6 @@ class BPLRB_Lognormal_Product(Distribution):
         lognormal_cv: float,
         name: str = "",
     ) -> None:
-        self.name = name
         self.binomial = Binomial_Poisson_Lognormal_Ratio_Beta(
             A_mean=A_mean,
             A_cv=A_cv,

@@ -25,7 +25,14 @@ class Portfolio:
         self.organic_names = [c.name for c in self.organic_campaigns]
         self.paid_campaigns = [c for c in campaigns if not c.is_organic]
         self.paid_names = [c.name for c in self.paid_campaigns]
-        self.df = None
+        self._data = None
+
+    @property
+    def data(self):
+        if self._data is None:
+            print("No data found. Running simulation with default parameters...")
+            self.sim_outcomes()
+        return self._data
 
     def print_stats(self, budgets: dict[str, float] = None):
         columns = [
@@ -93,13 +100,13 @@ class Portfolio:
             budgets = {name: c.base_budget for name, c in self.campaigns.items()}
         for name, budget in budgets.items():
             self.campaigns[name].sim_outcomes(budget=budget)
-        df = pd.concat([c.df for c in self.campaigns.values()])
-        self.df = df
+        df = pd.concat([c.data for c in self.campaigns.values()])
+        self._data = df
         return df
 
     def plot(self, df: pd.DataFrame = None):
         if df is None:
-            df = self.df
+            df = self.data
         df = df.reset_index(names="date")
 
         fig, ax = plt.subplots(1, 2, figsize=(15, 5))
@@ -135,8 +142,8 @@ class Portfolio:
             "date",
             "$",
             "Date",
-            "Sales",
-            "Sales",
+            "Budget",
+            "Budget",
             legend_loc="r",
         )
         stacked_bar_plot(ax[1], "sales")

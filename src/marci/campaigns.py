@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -10,7 +9,6 @@ from .utils.elasticity import Elasticity
 from .utils.distributions import (
     Lognormal,
     Beta,
-    Lognormal_Ratio,
     safe_poisson,
     safe_binomial,
 )
@@ -48,10 +46,23 @@ class Campaign:
         self.Delay = Conversion_Delay(p=conversion_delay)
         self.Elasticity = Elasticity(elasticity_coef=elasticity)
         self.color = color
-        self.df = None
+        self._data = None
+
+        self.CPM = Lognormal(
+            mean=self.cpm * (1 + cv**2), cv=cv, name=f"{self.name}_CPM"
+        )
+        self.CVR = Beta(mean=self.cvr, cv=cv, name=f"{self.name}_CVR")
+        self.AOV = Lognormal(mean=self.aov, cv=cv, name=f"{self.name}_AOV")
 
     def __repr__(self):
         return f"Campaign({self.name}, cpm={self.cpm:.1f}, cvr={self.cvr:.3%}, aov={self.aov:.1f}, roas={self.exp_roas():.0%}, start_date={self.start_date}, duration={self.duration})"
+
+    @property
+    def data(self):
+        if self._data is None:
+            print("No data found. Running simulation with default parameters...")
+            self.sim_outcomes()
+        return self._data
 
     def exp_roas(self, budget: float = None):
         if budget is None:
@@ -64,19 +75,16 @@ class Campaign:
     def exp_daily_sales(self, budget: float = None):
         if budget is None:
             budget = self.base_budget
-        if self.is_organic:
-            return 1000 * self.cvr * self.aov / self.cpm * budget
-        elasticity = self.Elasticity.roas(budget / self.base_budget)
-        return 1000 * self.cvr * self.aov / self.cpm * elasticity * budget
+        return self.exp_roas(budget) * budget
 
     def exp_tot_sales(self, budget: float = None):
         return self.exp_daily_sales(budget) * self.duration
 
     def sim_outcomes(
         self,
+        budget: float = None,
         start_date: str = "2025-01-01",
         periods: int = 90,
-        budget: float = None,
         cv: float = None,
         plot: bool = False,
     ):
@@ -100,30 +108,26 @@ class Campaign:
         df["elasticity"] = self.Elasticity.roas(df["budget_relative_to_baseline"])
         elasticity = df["elasticity"] ** (1 / 2)
 
-        CPM = Lognormal(mean=self.cpm * (1 + cv**2), cv=cv, name=f"{self.name}_CPM")
-        CVR = Beta(mean=self.cvr, cv=cv, name=f"{self.name}_CVR")
-        AOV = Lognormal(mean=self.aov, cv=cv, name=f"{self.name}_AOV")
-
         df["imps"] = safe_poisson(
-            1000 * df["budget"] / CPM.generate(periods) / elasticity
+            1000 * df["budget"] / self.CPM.generate(periods) / elasticity
         )
-        df["convs"] = safe_binomial(df["imps"], CVR.generate(periods) * elasticity)
+        df["convs"] = safe_binomial(df["imps"], self.CVR.generate(periods) * elasticity)
 
         attr_convs = self.Delay.delay(df["convs"])
         df = df.join(attr_convs, how="outer")
-        df["aov"] = AOV.generate(periods + self.Delay.duration - 1)
+        df["aov"] = self.AOV.generate(periods + self.Delay.duration - 1)
         df["sales"] = df["attr_convs"] * df["aov"]
         mask = df["budget"] > 0
         df.loc[mask, "roas"] = df.loc[mask, "sales"] / df.loc[mask, "budget"]
         df = df[df["attr_convs"] > 0].copy()
         if plot:
             self.plot(df)
-        self.df = df
+        self._data = df
         return df
 
     def plot(self, df: pd.DataFrame = None):
         if df is None:
-            df = self.df
+            df = self.data
 
         def plot_seasonality(ax):
             mu = df["seasonality"].mean()
@@ -131,7 +135,7 @@ class Campaign:
             ax.plot(
                 df.index,
                 df["seasonality"],
-                color="dodgerblue",
+                color="orangered",
                 lw=2,
                 label=f"mu={mu:.0%}, cv={cv:.0%}",
             )
