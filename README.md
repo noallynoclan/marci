@@ -57,14 +57,13 @@ print(f"Expected Sales: ${campaign.exp_tot_sales():,.0f}")
 # Create multiple campaigns
 campaigns = [
     Campaign(name="Paid Search", cpm=12.0, cvr=0.04, aov=100.0, 
-             cv=0.15, start_date="2024-01-01", duration=30, 
+             cv=0.15, start_date="2024-01-01",  
              base_budget=3000.0, is_organic=False),
     Campaign(name="Social Media", cpm=8.0, cvr=0.03, aov=80.0, 
-             cv=0.25, start_date="2024-01-01", duration=30, 
+             cv=0.25, start_date="2024-01-01", 
              base_budget=2000.0, is_organic=False),
-    Campaign(name="Organic", cpm=0.0, cvr=0.02, aov=150.0, 
-             cv=0.1, start_date="2024-01-01", duration=30, 
-             base_budget=1.0, is_organic=True)
+    Campaign(name="Organic", c start_date="2024-01-01", 
+             base_budget=1000, is_organic=True)
 ]
 
 # Create portfolio and optimize budget allocation
@@ -84,34 +83,49 @@ portfolio.print_stats(optimal_budgets)
 import os
 import matplotlib
 import matplotlib.pyplot as plt
-from marci import Campaign
-from marci.utils.portfolio import Portfolio
 
 # Use a non-interactive backend for servers/CI
 matplotlib.use("Agg", force=True)
 
-# Build a small portfolio with safe values
-campaigns = [
-    Campaign(name="Paid Search", cpm=50.0, cvr=0.02, aov=80.0, cv=0.10,
-             start_date="2024-01-01", duration=14, base_budget=300.0, is_organic=False),
-    Campaign(name="Social Media", cpm=40.0, cvr=0.015, aov=70.0, cv=0.10,
-             start_date="2024-01-01", duration=14, base_budget=200.0, is_organic=False),
-    Campaign(name="Organic", cpm=0.0, cvr=0.01, aov=50.0, cv=0.05,
-             start_date="2024-01-01", duration=14, base_budget=1.0, is_organic=True),
-]
-portfolio = Portfolio(campaigns)
-
-# Find optimal allocation within a modest total budget
-optimal_budgets = portfolio.find_optimal_budgets(total_budget=1000.0)
-
 # Ensure output folder exists
 os.makedirs("docs", exist_ok=True)
 
-# Simulate, plot, and save
-df = portfolio.sim_outcomes(optimal_budgets)
-portfolio.plot(df)
+# Optionally, avoid blocking GUI windows
+plt.show = lambda *args, **kwargs: None
+
+# Simulate and plot
+portfolio_results = portfolio.sim_outcomes(optimal_budgets)
+portfolio.plot(portfolio_results)
+
+# Save chart
 plt.savefig("docs/portfolio_example.png", dpi=150, bbox_inches="tight")
 print("Saved chart to docs/portfolio_example.png")
+```
+
+### Visualize and Save a Single Campaign Chart
+
+```python
+import os
+import matplotlib
+import matplotlib.pyplot as plt
+from marci import Campaign
+
+# Use non-interactive backend
+matplotlib.use("Agg", force=True)
+
+# Create a single campaign (uses sensible defaults)
+c = Campaign(name="Email", cpm=25.0, cvr=0.03, aov=60.0,
+            cv=0.10, start_date="2024-01-01", duration=21,
+            base_budget=500.0, is_organic=False)
+
+# Simulate outcomes and plot
+df = c.sim_outcomes()
+c.plot(df)
+
+# Ensure output folder exists and save
+os.makedirs("docs", exist_ok=True)
+plt.savefig("docs/campaign_example.png", dpi=150, bbox_inches="tight")
+print("Saved chart to docs/campaign_example.png")
 ```
 
 ### Advanced Analytics
