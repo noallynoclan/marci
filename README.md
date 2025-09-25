@@ -102,6 +102,10 @@ plt.savefig("docs/portfolio_example.png", dpi=150, bbox_inches="tight")
 print("Saved chart to docs/portfolio_example.png")
 ```
 
+Preview:
+
+![Portfolio Performance Chart](docs/portfolio_example.png)
+
 ### Visualize and Save a Single Campaign Chart
 
 ```python
@@ -127,6 +131,10 @@ os.makedirs("docs", exist_ok=True)
 plt.savefig("docs/campaign_example.png", dpi=150, bbox_inches="tight")
 print("Saved chart to docs/campaign_example.png")
 ```
+
+Preview:
+
+![Single Campaign Chart](docs/campaign_example.png)
 
 ### Advanced Analytics
 
