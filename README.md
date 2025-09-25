@@ -64,7 +64,7 @@ campaigns = [
              base_budget=2000.0, is_organic=False),
     Campaign(name="Organic", cpm=0.0, cvr=0.02, aov=150.0, 
              cv=0.1, start_date="2024-01-01", duration=30, 
-             base_budget=0.0, is_organic=True)
+             base_budget=1.0, is_organic=True)
 ]
 
 # Create portfolio and optimize budget allocation
@@ -75,6 +75,43 @@ print("Optimal Budget Allocation:", optimal_budgets)
 # Simulate portfolio outcomes
 portfolio_results = portfolio.sim_outcomes(optimal_budgets)
 portfolio.print_stats(optimal_budgets)
+```
+
+### Visualize and Save Campaigns Performance Chart
+
+```python
+# Generate and save a portfolio performance chart
+import os
+import matplotlib
+import matplotlib.pyplot as plt
+from marci import Campaign
+from marci.utils.portfolio import Portfolio
+
+# Use a non-interactive backend for servers/CI
+matplotlib.use("Agg", force=True)
+
+# Build a small portfolio with safe values
+campaigns = [
+    Campaign(name="Paid Search", cpm=50.0, cvr=0.02, aov=80.0, cv=0.10,
+             start_date="2024-01-01", duration=14, base_budget=300.0, is_organic=False),
+    Campaign(name="Social Media", cpm=40.0, cvr=0.015, aov=70.0, cv=0.10,
+             start_date="2024-01-01", duration=14, base_budget=200.0, is_organic=False),
+    Campaign(name="Organic", cpm=0.0, cvr=0.01, aov=50.0, cv=0.05,
+             start_date="2024-01-01", duration=14, base_budget=1.0, is_organic=True),
+]
+portfolio = Portfolio(campaigns)
+
+# Find optimal allocation within a modest total budget
+optimal_budgets = portfolio.find_optimal_budgets(total_budget=1000.0)
+
+# Ensure output folder exists
+os.makedirs("docs", exist_ok=True)
+
+# Simulate, plot, and save
+df = portfolio.sim_outcomes(optimal_budgets)
+portfolio.plot(df)
+plt.savefig("docs/portfolio_example.png", dpi=150, bbox_inches="tight")
+print("Saved chart to docs/portfolio_example.png")
 ```
 
 ### Advanced Analytics
