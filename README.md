@@ -34,16 +34,14 @@ import pandas as pd
 
 # Create a marketing campaign
 campaign = Campaign(
-    name="Summer Sale",
-    cpm=15.0,
-    cvr=0.05,
-    aov=120.0,
-    cv=0.2,
-    start_date="2024-06-01",
-    duration=30,
-    base_budget=5000.0,
-    is_organic=False
-)
+    name="Google Search",
+    start_date="2025-06-10",
+    duration=120,
+    cpm=30,
+    cvr=5e-4,
+    aov=100,
+    base_budget=2000,
+),
 
 # Simulate campaign outcomes
 results = campaign.sim_outcomes()
@@ -56,14 +54,47 @@ print(f"Expected Sales: ${campaign.exp_tot_sales():,.0f}")
 ```python
 # Create multiple campaigns
 campaigns = [
-    Campaign(name="Paid Search", cpm=12.0, cvr=0.04, aov=100.0, 
-             cv=0.15, start_date="2024-01-01",  
-             base_budget=3000.0, is_organic=False),
-    Campaign(name="Social Media", cpm=8.0, cvr=0.03, aov=80.0, 
-             cv=0.25, start_date="2024-01-01", 
-             base_budget=2000.0, is_organic=False),
-    Campaign(name="Organic", c start_date="2024-01-01", 
-             base_budget=1000, is_organic=True)
+    Campaign(
+        name="Organic",
+        base_budget=5000,
+        is_organic=True,
+        elasticity=0.9,
+    ),
+    Campaign(
+        name="Google Search",
+        cpm=30,
+        cvr=5e-4,
+        aov=100,
+        base_budget=2000,
+    ),
+    Campaign(
+        name="Google Display",
+        cpm=10,
+        cvr=1e-4,
+        aov=80,
+        base_budget=500,
+    ),
+    Campaign(
+        name="Meta",
+        cpm=10,
+        cvr=2e-4,
+        aov=80,
+        base_budget=1000,
+    ),
+    Campaign(
+        name="Youtube",
+        cpm=9,
+        cvr=1e-4,
+        aov=90,
+        base_budget=1000,
+    ),
+    Campaign(
+        name="TikTok",
+        cpm=5,
+        cvr=1e-4,
+        aov=60,
+        base_budget=500
+    ),
 ]
 
 # Create portfolio and optimize budget allocation
