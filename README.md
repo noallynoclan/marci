@@ -106,7 +106,7 @@ print(C.sim_data.agg_df.head())
     group            meta              budget    sales           roas      
     metric           name       kind     paid     paid    total  paid total
     0       Test Campaign   Expected  $90,000  $90,000  $90,000  100%  100%
-    1       Test Campaign  Simulated  $91,046  $94,610  $94,610  104%  104%
+    1       Test Campaign  Simulated  $90,617  $97,622  $97,622  108%  108%
     
 
 
@@ -123,28 +123,28 @@ print(C.sim_data.agg_df.head())
 
     Simulation DataFrame (first 5 rows):
             date           name  seasonality    base       budget  elastic_budget  \
-    0 2025-01-01  Test Campaign     0.721462  1000.0   668.325502        0.668326   
-    1 2025-01-02  Test Campaign     0.714294  1000.0   557.522861        0.557523   
-    2 2025-01-03  Test Campaign     0.748401  1000.0   613.642970        0.613643   
-    3 2025-01-04  Test Campaign     0.786256  1000.0   829.453505        0.829454   
-    4 2025-01-05  Test Campaign     0.873588  1000.0  1005.396585        1.005397   
+    0 2025-01-01  Test Campaign     1.070570  1000.0  1066.678961        1.066679   
+    1 2025-01-02  Test Campaign     0.969624  1000.0  1077.424553        1.077425   
+    2 2025-01-03  Test Campaign     0.999554  1000.0   843.474380        0.843474   
+    3 2025-01-04  Test Campaign     1.054579  1000.0  1047.619627        1.047620   
+    4 2025-01-05  Test Campaign     1.096727  1000.0  1029.258477        1.029258   
     
-       elastic_returns     imps  convs        sales  is_organic      roas  
-    0         1.041121  57498.0    5.0   520.909905       False  0.779425  
-    1         1.060166  58206.0    5.0   525.244738       False  0.942104  
-    2         1.050046  61977.0    9.0  1093.033323       False  1.781220  
-    3         1.018875  97888.0    7.0   583.672613       False  0.703683  
-    4         0.999462  83738.0    8.0   904.478341       False  0.899623  
+       elastic_returns      imps  convs        sales  is_organic      roas  
+    0         1.059816   96797.0    7.0   649.374062       False  0.608781  
+    1         1.069420   88450.0   11.0  1128.692625       False  1.047584  
+    2         0.857955   91293.0   11.0  1102.327693       False  1.306889  
+    3         1.042757  104047.0   10.0   840.966592       False  0.802740  
+    4         1.026295  110951.0   11.0  1477.024418       False  1.435037  
     
     Aggregated DataFrame (first 5 rows):
     Metric                     Budget                     Sales
     Name                Test Campaign          All          All
     date                                                       
-    2025-01-01 00:00:00    668.325502   668.325502   520.909905
-    2025-01-02 00:00:00    557.522861   557.522861   525.244738
-    2025-01-03 00:00:00    613.642970   613.642970  1093.033323
-    2025-01-04 00:00:00    829.453505   829.453505   583.672613
-    2025-01-05 00:00:00   1005.396585  1005.396585   904.478341
+    2025-01-01 00:00:00   1066.678961  1066.678961   649.374062
+    2025-01-02 00:00:00   1077.424553  1077.424553  1128.692625
+    2025-01-03 00:00:00    843.474380   843.474380  1102.327693
+    2025-01-04 00:00:00   1047.619627  1047.619627   840.966592
+    2025-01-05 00:00:00   1029.258477  1029.258477  1477.024418
     
 
 ## 📊 Portfolio Management
@@ -205,7 +205,7 @@ print(P.sim_data.agg_df.head())
     group        meta              budget    sales           roas      
     metric       name       kind     paid     paid     total paid total
     0       Portfolio   Expected  $50,000  $45,000  $135,000  90%  270%
-    1       Portfolio  Simulated  $50,642  $44,853  $135,103  89%  267%
+    1       Portfolio  Simulated  $49,271  $44,632  $136,402  91%  277%
     
 
 
@@ -216,24 +216,24 @@ print(P.sim_data.agg_df.head())
 
     Portfolio Simulation DataFrame (first 5 rows):
             date            name  seasonality    base       budget  \
-    0 2025-01-01  Stable Organic          1.0  1000.0   999.999967   
-    1 2025-01-02  Stable Organic          1.0  1000.0   999.999711   
-    2 2025-01-03  Stable Organic          1.0  1000.0   999.998856   
-    3 2025-01-04  Stable Organic          1.0  1000.0  1000.001150   
-    4 2025-01-05  Stable Organic          1.0  1000.0  1000.000850   
+    0 2025-01-01  Stable Organic          1.0  1000.0  1000.000565   
+    1 2025-01-02  Stable Organic          1.0  1000.0  1000.000427   
+    2 2025-01-03  Stable Organic          1.0  1000.0  1000.001450   
+    3 2025-01-04  Stable Organic          1.0  1000.0   999.999268   
+    4 2025-01-05  Stable Organic          1.0  1000.0   999.999955   
     
-       elastic_budget  elastic_returns      imps  convs        sales  is_organic  \
-    0        1.000000              1.0  100362.0   56.0   560.000035        True   
-    1        1.000000              1.0  100400.0   73.0   729.999105        True   
-    2        0.999999              1.0  100035.0  105.0  1050.001596        True   
-    3        1.000001              1.0   99690.0   81.0   810.000055        True   
-    4        1.000001              1.0   99915.0   80.0   800.000296        True   
+       elastic_budget  elastic_returns      imps  convs       sales  is_organic  \
+    0        1.000001         1.000000  100382.0   65.0  649.999866        True   
+    1        1.000000         1.000000   99524.0   81.0  810.000592        True   
+    2        1.000001         1.000001  100650.0   77.0  770.000795        True   
+    3        0.999999         0.999999  100233.0   77.0  770.000925        True   
+    4        1.000000         1.000000   99475.0   80.0  800.000148        True   
     
            roas  
-    0  0.560000  
-    1  0.729999  
-    2  1.050003  
-    3  0.809999  
+    0  0.649999  
+    1  0.810000  
+    2  0.770000  
+    3  0.770001  
     4  0.800000  
     
     Portfolio Aggregated DataFrame (first 5 rows):
@@ -246,14 +246,14 @@ print(P.sim_data.agg_df.head())
     2025-01-04 00:00:00             0.0             0.0            0.0  0.0   
     2025-01-05 00:00:00             0.0             0.0            0.0  0.0   
     
-    Metric                     Sales  
-    Name                         All  
-    date                              
-    2025-01-01 00:00:00   560.000035  
-    2025-01-02 00:00:00   729.999105  
-    2025-01-03 00:00:00  1050.001596  
-    2025-01-04 00:00:00   810.000055  
-    2025-01-05 00:00:00   800.000296  
+    Metric                    Sales  
+    Name                        All  
+    date                             
+    2025-01-01 00:00:00  649.999866  
+    2025-01-02 00:00:00  810.000592  
+    2025-01-03 00:00:00  770.000795  
+    2025-01-04 00:00:00  770.000925  
+    2025-01-05 00:00:00  800.000148  
     
 
 ## 🎯 Advanced Portfolio Scenarios
@@ -340,7 +340,7 @@ print(P.sim_data.agg_df.head())
     group        meta               budget     sales            roas      
     metric       name       kind      paid      paid     total  paid total
     0       Portfolio   Expected  $270,000  $270,000  $480,000  100%  178%
-    1       Portfolio  Simulated  $269,025  $271,638  $473,722  101%  176%
+    1       Portfolio  Simulated  $272,299  $267,292  $470,277   98%  173%
     
 
 
@@ -351,53 +351,53 @@ print(P.sim_data.agg_df.head())
 
     Advanced Portfolio Simulation DataFrame (first 5 rows):
             date                         name  seasonality    base       budget  \
-    0 2025-01-01  High Performace Non-Elastic     1.070488  1000.0  1026.643465   
-    1 2025-01-01      Low Performance Elastic     1.281612  1000.0  1198.446675   
-    2 2025-01-01    Medium Performace Elastic     1.552583  1000.0  1135.638100   
-    3 2025-01-01          Noisy Organic Trend     1.597714  2000.0  2713.797461   
-    4 2025-01-02  High Performace Non-Elastic     0.953048  1000.0  1093.085134   
+    0 2025-01-01  High Performace Non-Elastic     0.702271  1000.0   661.935832   
+    1 2025-01-01      Low Performance Elastic     0.931531  1000.0   854.011306   
+    2 2025-01-01    Medium Performace Elastic     0.833052  1000.0   636.416261   
+    3 2025-01-01          Noisy Organic Trend     0.607796  2000.0  1192.438161   
+    4 2025-01-02  High Performace Non-Elastic     0.602950  1000.0   574.981623   
     
-       elastic_budget  elastic_returns      imps  convs        sales  is_organic  \
-    0        1.026643         0.989537  111983.0  113.0  1149.910791       False   
-    1        1.198447         0.964442  101021.0   44.0   456.837049       False   
-    2        1.135638         0.974882  113977.0   92.0   872.665627       False   
-    3        1.356899         0.940785  269918.0  186.0  1766.914483        True   
-    4        1.093085         0.965025  114501.0  151.0  1248.790741       False   
+       elastic_budget  elastic_returns     imps  convs        sales  is_organic  \
+    0        0.661936         0.780710  76205.0   79.0  1020.004479       False   
+    1        0.854011         0.881396  97647.0   39.0   361.154190       False   
+    2        0.636416         0.696615  78609.0   53.0   526.351551       False   
+    3        0.596219         0.661188  98963.0   79.0   846.659166        True   
+    4        0.574982         0.717451  59007.0   72.0   704.151962       False   
     
            roas  
-    0  1.120068  
-    1  0.381191  
-    2  0.768436  
-    3  0.651086  
-    4  1.142446  
+    0  1.540942  
+    1  0.422892  
+    2  0.827055  
+    3  0.710024  
+    4  1.224651  
     
     Advanced Portfolio Aggregated DataFrame (first 5 rows):
     Metric                                   Budget                          \
     Name                High Performace Non-Elastic Low Performance Elastic   
     date                                                                      
-    2025-01-01 00:00:00                 1026.643465             1198.446675   
-    2025-01-02 00:00:00                 1093.085134             1162.190795   
-    2025-01-03 00:00:00                 1184.640240             1052.799403   
-    2025-01-04 00:00:00                 1033.629232             1050.185787   
-    2025-01-05 00:00:00                  907.288416             1006.549340   
+    2025-01-01 00:00:00                  661.935832              854.011306   
+    2025-01-02 00:00:00                  574.981623              925.368919   
+    2025-01-03 00:00:00                  671.956746             1050.061300   
+    2025-01-04 00:00:00                  506.515796              836.507017   
+    2025-01-05 00:00:00                  595.779763              850.138304   
     
     Metric                                                             \
     Name                Medium Performace Elastic Noisy Organic Trend   
     date                                                                
-    2025-01-01 00:00:00               1135.638100                 0.0   
-    2025-01-02 00:00:00               1170.844047                 0.0   
-    2025-01-03 00:00:00               1253.495605                 0.0   
-    2025-01-04 00:00:00               1452.479191                 0.0   
-    2025-01-05 00:00:00               1387.257202                 0.0   
+    2025-01-01 00:00:00                636.416261                 0.0   
+    2025-01-02 00:00:00                823.136665                 0.0   
+    2025-01-03 00:00:00                733.582761                 0.0   
+    2025-01-04 00:00:00                980.154547                 0.0   
+    2025-01-05 00:00:00               1024.326573                 0.0   
     
     Metric                                                         Sales  
     Name                One Time Organic Spike          All          All  
     date                                                                  
-    2025-01-01 00:00:00                    0.0  3360.728240  4246.327950  
-    2025-01-02 00:00:00                    0.0  3426.119975  5087.618221  
-    2025-01-03 00:00:00                    0.0  3490.935247  5715.222430  
-    2025-01-04 00:00:00                    0.0  3536.294210  5353.701220  
-    2025-01-05 00:00:00                    0.0  3301.094957  4941.666509  
+    2025-01-01 00:00:00                    0.0  2152.363399  2754.169385  
+    2025-01-02 00:00:00                    0.0  2323.487207  2920.950222  
+    2025-01-03 00:00:00                    0.0  2455.600807  2676.413372  
+    2025-01-04 00:00:00                    0.0  2323.177359  3770.815142  
+    2025-01-05 00:00:00                    0.0  2470.244640  3491.831445  
     
 
 ## 💰 Budget Optimization
@@ -448,20 +448,22 @@ P.plot()
     Budgets('Optimal Budget', total=$15,000, {'High Performace Non-Elastic': $1,577, 'Medium Performace Elastic': $1,380, 'Low Performance Elastic': $43, 'Noisy Organic Trend': $2,000, 'One Time Organic Spike': $10,000})
     Simulating Campaign('High Performace Non-Elastic', budget=$1,000, duration=90, exp_roas=150%, cv=10%)
     Simulating Campaign('Medium Performace Elastic', budget=$1,000, duration=90, exp_roas=100%, cv=10%)
-    Simulating Campaign('Low Performance Elastic', budget=$1,000, duration=90, exp_roas=50%, cv=10%)
-    Simulating Campaign('Noisy Organic Trend', budget=$2,000, duration=90, exp_roas=100%, cv=10%)
-    Simulating Campaign('One Time Organic Spike', budget=$10,000, duration=3, exp_roas=100%, cv=10%)
     
 
+    Simulating Campaign('Low Performance Elastic', budget=$1,000, duration=90, exp_roas=50%, cv=10%)
+
+    
+    Simulating Campaign('Noisy Organic Trend', budget=$2,000, duration=90, exp_roas=100%, cv=10%)
+    Simulating Campaign('One Time Organic Spike', budget=$10,000, duration=3, exp_roas=100%, cv=10%)
     group        meta               budget     sales            roas      
     metric       name       kind      paid      paid     total  paid total
     0       Portfolio   Expected  $270,000  $297,515  $507,515  110%  188%
-    1       Portfolio  Simulated  $268,393  $296,059  $499,360  110%  186%
+    1       Portfolio  Simulated  $270,639  $295,977  $501,271  109%  185%
     
 
 
     
-![png](README_files/README_10_2.png)
+![png](README_files/README_10_3.png)
     
 
 
@@ -513,19 +515,17 @@ P.plot()
     Simulating Campaign('High Performace Non-Elastic', budget=$1,000, duration=90, exp_roas=150%, cv=10%)
     Simulating Campaign('Medium Performace Elastic', budget=$1,000, duration=90, exp_roas=100%, cv=10%)
     Simulating Campaign('Low Performance Elastic', budget=$1,000, duration=90, exp_roas=50%, cv=10%)
-    
-
     Simulating Campaign('Noisy Organic Trend', budget=$2,000, duration=90, exp_roas=100%, cv=10%)
     Simulating Campaign('One Time Organic Spike', budget=$10,000, duration=3, exp_roas=100%, cv=10%)
     group        meta                 budget       sales              roas      
     metric       name       kind        paid        paid       total  paid total
     0       Portfolio   Expected    $270,000  $1,546,840  $1,756,840  573%  651%
-    1       Portfolio  Simulated  $2,718,265  $1,495,241  $1,706,946   55%   63%
+    1       Portfolio  Simulated  $2,706,257  $1,551,074  $1,768,631   57%   65%
     
 
 
     
-![png](README_files/README_12_2.png)
+![png](README_files/README_12_1.png)
     
 
 
