@@ -2,7 +2,6 @@ import warnings
 import pandas as pd
 import numpy as np
 from .utils import fmt, style, get_campaign_colors, PerformanceStats
-import warnings
 import matplotlib.pyplot as plt
 
 
@@ -290,16 +289,33 @@ class SimulatedData:
             legend_loc="r",
         )
 
+    def plot_elasticity(self, ax, include_organic=False):
+        campaigns = self.campaign_names if include_organic else self.paid_names
+        mask = self.df["name"].isin(campaigns)
+        for name in campaigns:
+            mask = self.df["name"] == name
+            _df = self.df[mask].sort_values("elastic_budget")
+            ax.plot(
+                _df["elastic_budget"],
+                _df["elastic_returns"],
+                label=name,
+                color=self.colors[name],
+            )
+        style(
+            ax,
+            x_fmt=".0%",
+            y_fmt=".0%",
+            x_label="Elastic Budget",
+            y_label="Elastic Returns",
+            title="Elasticity",
+            legend_loc="r",
+        )
+
     def plot(self, include_organic=False):
         fig, ax = plt.subplots(3, 2, figsize=(16, 12))
         ax = ax.ravel()
         self.plot_lines("seasonality", ax[0], include_organic=True)
-        self.plot_scatter(
-            "elastic_returns",
-            ax[1],
-            title="Elastic ROAS",
-            include_organic=include_organic,
-        )
+        self.plot_elasticity(ax[1], include_organic=include_organic)
         self.plot_bars("budget", ax[2], title="Budget", include_organic=include_organic)
         self.plot_bars("sales", ax[3], title="Sales", include_organic=True)
         self.plot_scatter("roas", ax[4], title="ROAS", include_organic=include_organic)

@@ -27,12 +27,12 @@ def get_campaign_colors(names: list[str]) -> dict[str, str]:
         return {}
 
     # choose suitable colormap
-    if n <= 10:
-        cmap = plt.get_cmap("tab10")
-    elif n <= 20:
-        cmap = plt.get_cmap("tab20")
-    else:
-        cmap = plt.get_cmap("viridis")  # or "viridis", "plasma", etc.
+    # if n <= 10:
+    #     cmap = plt.get_cmap("tab10")
+    # elif n <= 20:
+    #     cmap = plt.get_cmap("tab20")
+    # else:
+    cmap = plt.get_cmap("viridis")  # or "viridis", "plasma", etc.
 
     # sample evenly spaced colors from the cmap
     colors = [to_hex(cmap(i / max(1, n - 1))) for i in range(n)]

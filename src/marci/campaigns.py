@@ -156,8 +156,9 @@ class Campaign:
             Budget = Lognormal(mean=budget, cv=cv, name=f"{self.name}_Budget")
             df["budget"] = Budget.generate(duration) * df["seasonality"]
         df["elastic_budget"] = df["budget"] / self.base
-        df["elastic_returns"] = self.Elasticity.roas(df["elastic_budget"])
-        elasticity = df["elastic_returns"] ** (1 / 2)
+        elastic_roas = self.Elasticity.roas(df["elastic_budget"])
+        df["elastic_returns"] = self.Elasticity.total_return(df["elastic_budget"])
+        elasticity = elastic_roas ** (1 / 2)
 
         df["imps"] = safe_poisson(
             1000 * df["budget"] / self.CPM.generate(duration) * elasticity

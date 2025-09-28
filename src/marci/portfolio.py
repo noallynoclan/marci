@@ -4,10 +4,7 @@ import pandas as pd
 from typing import TYPE_CHECKING
 import numpy as np
 from scipy.optimize import minimize
-from matplotlib.colors import to_hex
-from itertools import cycle
 import matplotlib.pyplot as plt
-from .utils.plot_utils import style
 from .budgets import Budgets
 from .simulated_data import SimulatedData
 from .utils.performance_stats import PerformanceStats
