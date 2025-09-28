@@ -111,13 +111,13 @@ print(C.sim_data.agg_df.head())
 
 
     
-![Campaign Performance Chart](docs/campaign_example.png)
+![png](README_files/README_4_1.png)
     
 
 
 
     
-![Campaign Elasticity and Delay Chart](docs/campaign_example.png)
+![png](README_files/README_4_2.png)
     
 
 
@@ -210,7 +210,7 @@ print(P.sim_data.agg_df.head())
 
 
     
-![Portfolio Performance Chart](docs/portfolio_example.png)
+![png](README_files/README_6_1.png)
     
 
 
@@ -345,7 +345,7 @@ print(P.sim_data.agg_df.head())
 
 
     
-![png](output_8_1.png)
+![png](README_files/README_8_1.png)
     
 
 
@@ -461,7 +461,7 @@ P.plot()
 
 
     
-![png](output_10_2.png)
+![png](README_files/README_10_2.png)
     
 
 
@@ -525,7 +525,7 @@ P.plot()
 
 
     
-![png](output_12_2.png)
+![png](README_files/README_12_2.png)
     
 
 
