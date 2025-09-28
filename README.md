@@ -111,13 +111,13 @@ print(C.sim_data.agg_df.head())
 
 
     
-![png](output_4_1.png)
+![Campaign Performance Chart](docs/campaign_example.png)
     
 
 
 
     
-![png](output_4_2.png)
+![Campaign Elasticity and Delay Chart](docs/campaign_example.png)
     
 
 
@@ -210,7 +210,7 @@ print(P.sim_data.agg_df.head())
 
 
     
-![png](output_6_1.png)
+![Portfolio Performance Chart](docs/portfolio_example.png)
     
 
 
