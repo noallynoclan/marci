@@ -8,8 +8,6 @@ dynamic = ["version"]
 description = "Marci: Marketing Science utilities for campaign analysis and simulation"
 readme = "README.md"
 requires-python = ">=3.8"
-license = "MIT"
-license-files = ["LICENSE"]
 authors = [
   { name = "Marci Contributors", email = "noallynoclan@gmail.com" }
 ]

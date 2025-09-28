@@ -61,22 +61,22 @@ class TestStyleFunction:
         )
         ax.plot(dates, [1, 2])
 
-        style(ax, x_fmt="date")
+        style(ax, x_fmt="d")
 
         # Check if formatter is set
         formatter = ax.xaxis.get_major_formatter()
         assert formatter is not None
         plt.close(fig)
 
-    def test_style_month_formatting(self):
-        """Test month formatting."""
+    def test_style_date_formatting_axis(self):
+        """Test date formatting on axis."""
         fig, ax = plt.subplots()
         dates = mdates.date2num(
             [mdates.datestr2num("2023-01-01"), mdates.datestr2num("2023-02-01")]
         )
         ax.plot(dates, [1, 2])
 
-        style(ax, x_fmt="mon")
+        style(ax, x_fmt="d")
 
         # Check if formatter is set
         formatter = ax.xaxis.get_major_formatter()

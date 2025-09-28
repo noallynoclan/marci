@@ -23,9 +23,9 @@ class Elasticity:
         if elasticity_coef <= 0:
             raise ValueError("elasticity_coef must be > 0")
 
-        self.k = elasticity_coef
-        self.saturation_rate = saturation_rate
-        self.tol = 1e-8
+        self.tol = 1e-3
+        self.k = max(elasticity_coef, self.tol)
+        self.saturation_rate = max(saturation_rate, self.k)
 
         # Detect saturation_rate ≈ 0 -> use limit formulas
         self.use_limit = abs(self.saturation_rate) < self.tol
@@ -43,44 +43,65 @@ class Elasticity:
 
             self.a = (1 + self.c * denom) / denom
 
+    def roas(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+        """Total returns T(x)."""
+        x = np.asarray(x, dtype=float).clip(min=self.tol)
+        return np.power(x, self.k - 1)
+
     def total_return(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """Total returns T(x)."""
-        x = np.asarray(x, dtype=float)
-
-        if self.use_limit:
-            return x / (self.k + (1 - self.k) * x)
-
-        u = 1 - np.exp(-self.saturation_rate * x)
-        return self.a * u / (1 + self.c * u)
+        x = np.asarray(x, dtype=float).clip(min=self.tol)
+        return np.power(x, self.k)
 
     def margin_return(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """Marginal returns T'(x)."""
-        x = np.asarray(x, dtype=float)
+        x = np.asarray(x, dtype=float).clip(min=self.tol)
+        return self.k * np.power(x, self.k - 1)
 
-        if self.use_limit:
-            return self.k / (self.k + (1 - self.k) * x) ** 2
+    # def total_return(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    #     """Total returns T(x)."""
+    #     x = np.asarray(x, dtype=float)
 
-        u = 1 - np.exp(-self.saturation_rate * x)
-        return (self.a * self.saturation_rate * np.exp(-self.saturation_rate * x)) / (
-            1 + self.c * u
-        ) ** 2
+    #     if self.use_limit:
+    #         return x / (self.k + (1 - self.k) * x)
 
-    def roas(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
-        """Return on ad spend = TR(x)/x."""
-        x = np.asarray(x, dtype=float)
+    #     u = 1 - np.exp(-self.saturation_rate * x)
+    #     return self.a * u / (1 + self.c * u)
 
-        if self.use_limit:
-            with np.errstate(divide="ignore", invalid="ignore"):
-                roas = 1 / (self.k + (1 - self.k) * x)
-                roas = np.where(x == 0, self.margin_return(0), roas)
-            return roas
+    # def margin_return(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    #     """Marginal returns T'(x)."""
+    #     x = np.asarray(x, dtype=float)
 
-        with np.errstate(divide="ignore", invalid="ignore"):
-            roas = self.total_return(x) / x
-            roas = np.where(x == 0, self.margin_return(0), roas)
-        return roas
+    #     if self.use_limit:
+    #         return self.k / (self.k + (1 - self.k) * x) ** 2
 
-    def plot(self, ax=None, max_x: float = 4, num: int = 200):
+    #     u = 1 - np.exp(-self.saturation_rate * x)
+    #     return (self.a * self.saturation_rate * np.exp(-self.saturation_rate * x)) / (
+    #         1 + self.c * u
+    #     ) ** 2
+
+    # def roas(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    #     """Return on ad spend = TR(x)/x."""
+    #     x = np.asarray(x, dtype=float)
+
+    #     if self.use_limit:
+    #         with np.errstate(divide="ignore", invalid="ignore"):
+    #             roas = 1 / (self.k + (1 - self.k) * x)
+    #             roas = np.where(x == 0, self.margin_return(0), roas)
+    #         return roas
+
+    #     with np.errstate(divide="ignore", invalid="ignore"):
+    #         roas = self.total_return(x) / x
+    #         roas = np.where(x == 0, self.margin_return(0), roas)
+    #     return roas
+
+    def plot(
+        self,
+        ax=None,
+        max_x: float = 4,
+        max_y: float = None,
+        num: int = 200,
+    ):
         """Plot TR, MR, and ROAS curves."""
         if ax is None:
             fig, ax = plt.subplots(figsize=(7, 5))
@@ -109,5 +130,7 @@ class Elasticity:
             "Budget",
             title="Elasticity Curves",
         )
-
+        # Set y-limits after style() to avoid tight_layout() override
+        if max_y is not None:
+            ax.set_ylim(0, max_y)
         return ax

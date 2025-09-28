@@ -12,10 +12,6 @@ from .plot_utils import style
 
 class Conversion_Delay:
     def __init__(self, p: float = 0.3, duration: int = 7):
-        """
-        p: probability that a conversion is delayed beyond day 1 (0..1)
-        duration: number of days in the attribution window (>=1)
-        """
         if not (0 <= p <= 1):
             raise ValueError("p must be in [0, 1].")
         if duration < 1:
@@ -25,76 +21,97 @@ class Conversion_Delay:
 
     @property
     def probs(self) -> np.ndarray:
-        # Single-day window: all conversions on day 1
         if self.duration == 1:
             return np.array([1.0], dtype=float)
 
         p = np.zeros(self.duration, dtype=float)
-        p[0] = 1 - self.p  # day 1 share is 1 - delayed probability
-
-        # Distribute delayed mass over days 2..duration
+        p[0] = 1 - self.p
         rem = self.p
-        k = np.arange(1, self.duration)  # days 2..D
-        # Stretched-exponential weights; power tied to p for continuity with your draft
+        k = np.arange(1, self.duration)
         power = min(self.p, 1 - self.p) if self.p not in (0.0, 1.0) else 1.0
         u = np.exp(-(k**power))
-
-        # Normalize tail to sum to 'rem'
         tail = rem * (u / u.sum())
         p[1:] = tail
-
-        # Guard against tiny FP drift; force exact sum to 1
         p[-1] += 1.0 - p.sum()
         return p
+
+    @staticmethod
+    def _normalize_daily(series: pd.Series) -> pd.Series:
+        """
+        Coerce to strictly daily DatetimeIndex, sum duplicates, sort, and fill gaps with zeros.
+        Handles unsorted input and tz-aware indices.
+        """
+        if not isinstance(series.index, pd.DatetimeIndex):
+            idx = pd.to_datetime(series.index, errors="raise")
+        else:
+            idx = series.index
+
+        if idx.tz is not None:
+            idx = idx.tz_convert("UTC").tz_localize(None)
+        idx = idx.normalize()
+
+        s = pd.Series(series.to_numpy(dtype=float), index=idx, dtype="float64")
+        s = s.groupby(level=0).sum().sort_index()
+        full_idx = pd.date_range(s.index.min(), s.index.max(), freq="D")
+        s = s.reindex(full_idx, fill_value=0.0)
+
+        if (s < 0).any():
+            raise ValueError("Input conversions must be non-negative.")
+        return s
 
     def delay(
         self, convs: Union[pd.Series, np.ndarray, list[int], list[float]]
     ) -> pd.Series:
         """
-        x: array-like of totals (integers). Returns (N, duration) aggregated along antidiagonals.
+        Apply conversion delay. Returns a daily pd.Series of realized conversions
+        with zero rows removed. Handles unsorted Series with skipped/duplicate days.
         """
-        x = np.asarray(convs)
-        if x.ndim != 1:
-            x = x.ravel()
-        if np.any(x < 0):
-            raise ValueError("x must be non-negative.")
-        probs = self.probs  # compute once
-        attr_convs = np.empty((len(x), self.duration), dtype=int)
-        for i, n in enumerate(x):
-            attr_convs[i] = np.random.multinomial(int(n), probs)
-        attr_convs = antidiag_sums(attr_convs).astype(int)
+        probs = self.probs
 
-        # Build date index: if convs is a Series use its index, else start today
-        if isinstance(convs, pd.Series) and len(convs.index) > 0:
-            start = convs.index.min()
+        if isinstance(convs, pd.Series):
+            convs_daily = self._normalize_daily(convs)
+            x = convs_daily.values.astype(float)
+            start = convs_daily.index[0]
         else:
+            x = np.asarray(convs, dtype=float).ravel()
+            if x.ndim != 1:
+                x = x.ravel()
+            if np.any(x < 0):
+                raise ValueError("x must be non-negative.")
             start = pd.Timestamp.today().normalize()
-        date_range = pd.date_range(
-            start=start, periods=len(x) + self.duration - 1, freq="D"
+
+        n_days_in = len(x)
+
+        attr_convs = np.empty((n_days_in, self.duration), dtype=np.int64)
+        for i, n in enumerate(x):
+            n_int = int(np.round(n))
+            if n_int < 0:
+                raise ValueError("x must be non-negative after rounding.")
+            attr_convs[i] = np.random.multinomial(n_int, probs)
+
+        realized = antidiag_sums(attr_convs).astype(np.int64)
+        out_index = pd.date_range(
+            start=start, periods=n_days_in + self.duration - 1, freq="D"
         )
-        return pd.Series(attr_convs, index=date_range, name="attr_convs")
+        out = pd.Series(realized, index=out_index, name="attr_convs")
+
+        # Remove zero-conversion days
+        out = out[out.ne(0)]
+        # Ensure dtype int64 even if empty
+        return out.astype("int64", copy=False)
 
     def plot(self, ax=None, bar_width=0.8):
-        """Plot the conversion delay distribution as a bar chart."""
         if ax is None:
             fig, ax = plt.subplots(figsize=(8, 5))
 
         probs = self.probs
         days = np.arange(1, self.duration + 1)
-
-        ax.bar(
-            days,
-            probs,
-            width=bar_width,
-            alpha=0.7,
-            color="dodgerblue",
-        )
-
-        # Add value labels on top of bars
-        for i, (day, prob) in enumerate(zip(days, probs)):
+        ax.bar(days, probs, width=bar_width, alpha=0.7, color="dodgerblue")
+        for day, prob in zip(days, probs):
             ax.text(
                 day, prob + 0.01, f"{prob:.2%}", ha="center", va="bottom", fontsize=9
             )
+
         style(
             ax,
             y_fmt="%",
@@ -103,5 +120,4 @@ class Conversion_Delay:
             title="Conversion Delay",
             legend=False,
         )
-
         return ax

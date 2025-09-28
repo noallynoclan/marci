@@ -7,7 +7,7 @@ from typing import Final
 import numpy as np
 import pandas as pd
 
-TOL = 1e-8
+TOL = 1e-6
 
 
 def safe_poisson(lam, size=None):
@@ -176,10 +176,8 @@ class Lognormal(Distribution):
     def __init__(self, mean: float, cv: float, name: str = "") -> None:
         mean, cv = self.handle_small_mean_cv(mean, cv)
         super().__init__(mean, cv, name)
-        self.sigma: Final[float] = float(np.sqrt(np.log(1.0 + self.cv**2)))
-        self.mu = 0
-        if mean != 0:
-            self.mu: Final[float] = float(np.log(self.mean) - 0.5 * self.sigma**2)
+        self.sigma: Final[float] = float(np.sqrt(np.log(1.0 + cv**2)))
+        self.mu: Final[float] = float(np.log(mean) - 0.5 * self.sigma**2)
 
     def generate(self, size: int) -> np.ndarray:
         if not isinstance(size, int) or size <= 0:

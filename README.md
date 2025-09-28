@@ -2,7 +2,6 @@
 
 [![Tests](https://img.shields.io/badge/tests-74%20passed-brightgreen)](https://github.com/noallynoclan/marci)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Marci: Marketing Science utilities for campaign analysis and simulation
 
@@ -345,7 +344,4 @@ python -m build
 python -m twine upload dist/*
 ```
 
-## License
-
-MIT
 

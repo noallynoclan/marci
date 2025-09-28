@@ -94,7 +94,7 @@ def test_lognormal_zero_mean():
     samples = d.generate(1000)
     # When mean is 0, the distribution should return very small values (not exactly 0)
     assert np.all(samples >= 0)  # Should be non-negative
-    assert np.all(samples < 1e-6)  # Should be very small values
+    assert np.all(samples < 1e-5)  # Should be very small values
 
 
 def test_lognormal_invalid_size():

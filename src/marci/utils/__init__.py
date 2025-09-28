@@ -3,8 +3,8 @@ from .distributions import Distribution, Lognormal
 from .elasticity import Elasticity
 from .conversion_delay import Conversion_Delay
 from .seasonality import Seasonality
-from .portfolio import Portfolio
-from .plot_utils import style
+from .plot_utils import style, fmt, get_campaign_colors
+from .performance_stats import PerformanceStats
 
 __all__ = [
     "antidiag_sums",
@@ -13,6 +13,8 @@ __all__ = [
     "Elasticity",
     "Conversion_Delay",
     "Seasonality",
-    "Portfolio",
     "style",
+    "fmt",
+    "PerformanceStats",
+    "get_campaign_colors",
 ]

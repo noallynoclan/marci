@@ -2,6 +2,42 @@ import matplotlib.dates as mdates
 from matplotlib.ticker import FuncFormatter
 from matplotlib.axes import Axes
 from typing import Optional
+import matplotlib.pyplot as plt
+from matplotlib.colors import to_hex
+
+
+def fmt(value, fmt):
+    if fmt == "$":
+        return f"${value:,.0f}"
+    if fmt == "%":
+        return f"{value:.0%}"
+    elif fmt == "d":
+        return mdates.DateFormatter("%Y-%m-%d")
+    else:
+        return f"{value:{fmt}}"
+
+
+def get_campaign_colors(names: list[str]) -> dict[str, str]:
+    """
+    Assigns distinct matplotlib colors for any number of campaign names.
+    Returns a dict {name: color_hex}.
+    """
+    n = len(names)
+    if n == 0:
+        return {}
+
+    # choose suitable colormap
+    if n <= 10:
+        cmap = plt.get_cmap("tab10")
+    elif n <= 20:
+        cmap = plt.get_cmap("tab20")
+    else:
+        cmap = plt.get_cmap("viridis")  # or "viridis", "plasma", etc.
+
+    # sample evenly spaced colors from the cmap
+    colors = [to_hex(cmap(i / max(1, n - 1))) for i in range(n)]
+
+    return dict(zip(names, colors))
 
 
 def style(
@@ -15,57 +51,19 @@ def style(
     legend: bool = True,
     legend_loc: Optional[str] = None,
 ) -> Axes:
-    """
-    Style a matplotlib axes with proper formatting for different data types.
-
-    Parameters:
-    -----------
-    ax : matplotlib.axes.Axes
-        The axes to style
-    x_fmt, y_fmt : str, optional
-        Format strings: '%' for percentage, '$' for currency, 'mon' for month names, 'date' for year-month
-    x_label, y_label : str, optional
-        Axis labels
-    title : str, optional
-        Plot title
-    font_size : int, default 10
-        Font size for labels and title
-    legend : bool, default True
-        Whether to show legend
-
-    Returns:
-    --------
-    matplotlib.axes.Axes
-        The styled axes
-
-    Examples:
-    ---------
-    >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> ax.plot([1, 2, 3], [0.1, 0.2, 0.3])
-    >>> style(ax, y_fmt='%', y_label='Conversion Rate', title='Test')
-    """
-
     # Handle Y-axis formatting
     if y_fmt is not None:
-        if y_fmt == "%":
-            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:.0%}"))
-        elif y_fmt == "$":
-            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: f"${x:,.0f}"))
+        if y_fmt in ["d"]:
+            ax.yaxis.set_major_formatter(fmt(None, y_fmt))
         else:
-            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:.2f}"))
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: fmt(x, y_fmt)))
 
+    # Handle X-axis formatting (dates)
     if x_fmt is not None:
-        if x_fmt == "%":
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:.0%}"))
-        elif x_fmt == "$":
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, p: f"${x:,.0f}"))
-        elif x_fmt == "mon":
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
-        elif x_fmt == "date":
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%y'%b"))
+        if x_fmt in ["d"]:
+            ax.xaxis.set_major_formatter(fmt(None, x_fmt))
         else:
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:.2f}"))
+            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, p: fmt(x, x_fmt)))
 
     # rotate x-axis labels
     ax.tick_params(axis="x", labelrotation=90)
@@ -76,10 +74,10 @@ def style(
         ax.set_ylabel(y_label, fontsize=font_size)
     if title is not None:
         ax.set_title(title, fontsize=font_size * 1.5)
-    ax.set_ylim(0, ax.get_ylim()[1])
     for spine in ax.spines.values():
         spine.set_visible(False)
     ax.grid(True, alpha=0.3)
+    ax.set_ylim(0, ax.get_ylim()[1])
     # Handle legend
     if legend:
         if legend_loc == "r":

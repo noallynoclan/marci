@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from .simulated_data import SimulatedData
+from .utils.performance_stats import PerformanceStats
 
 from .utils.conversion_delay import Conversion_Delay
 from .utils.elasticity import Elasticity
@@ -13,40 +14,43 @@ from .utils.distributions import (
     safe_binomial,
 )
 from .utils.seasonality import Seasonality
-from .utils.plot_utils import style
 
 
 class Campaign:
     def __init__(
         self,
         name: str = "Campaign",
-        cpm: float = 10,
-        cvr: float = 1e-4,
-        aov: float = 100,
-        cv: float = 0.1,
         start_date: str = "2025-01-01",
         duration: int = 90,
+        budget: float = 1000,
+        cpm: float = 10,
+        cvr: float = 1e-3,
+        aov: float = 10,
+        cv: float = 0.1,
         seasonality_cv: float = 0.2,
-        conversion_delay: float = 0.3,
-        elasticity: float = 0.9,
-        base_budget: float = 1000,
+        conv_delay: float = 0.3,
+        conv_delay_duration: int = 7,
+        elasticity: float = 0.8,
+        base: float = None,
         is_organic: bool = False,
-        color: str = None,
     ):
+        if base is None and budget is None:
+            raise ValueError("Either base or budget must be provided.")
         self.name = name
+        self.start_date = start_date
+        self.duration = duration
+        self.budget = budget if budget is not None else base
         self.cpm = cpm
         self.cvr = cvr
         self.aov = aov
         self.cv = cv
-        self.start_date = start_date
-        self.duration = duration
-        self.base_budget = base_budget
-        self.is_organic = is_organic
         self.Seasonality = Seasonality(cv=seasonality_cv)
-        self.Delay = Conversion_Delay(p=conversion_delay)
+        self.Delay = Conversion_Delay(p=conv_delay, duration=conv_delay_duration)
         self.Elasticity = Elasticity(elasticity_coef=elasticity)
-        self.color = color
-        self._data = None
+        self.base = base if base is not None else budget
+        self.is_organic = is_organic
+        self._Sim_Data = None
+        self._Sim_Stats = None
 
         self.CPM = Lognormal(
             mean=self.cpm * (1 + cv**2), cv=cv, name=f"{self.name}_CPM"
@@ -54,175 +58,141 @@ class Campaign:
         self.CVR = Beta(mean=self.cvr, cv=cv, name=f"{self.name}_CVR")
         self.AOV = Lognormal(mean=self.aov, cv=cv, name=f"{self.name}_AOV")
 
-    def __repr__(self):
-        return f"Campaign({self.name}, cpm={self.cpm:.1f}, cvr={self.cvr:.3%}, aov={self.aov:.1f}, roas={self.exp_roas():.0%}, start_date={self.start_date}, duration={self.duration})"
-
     @property
-    def data(self):
-        if self._data is None:
-            print("No data found. Running simulation with default parameters...")
+    def sim_data(self):
+        if self._Sim_Data is None:
             self.sim_outcomes()
-        return self._data
+        return self._Sim_Data
+
+    def __repr__(self):
+        return f"Campaign({self.name!r}, budget=${self.budget:,.0f}, duration={self.duration}, exp_roas={self.exp_roas():.0%}, cv={self.cv:.0%})"
+
+    def exp_tot_budget(self, budget: float = None, duration: int = None):
+        if budget is None:
+            budget = self.budget
+        if duration is None:
+            duration = self.duration
+        return self.budget * self.duration
 
     def exp_roas(self, budget: float = None):
         if budget is None:
-            budget = self.base_budget
-        if self.is_organic:
-            return 1000 * self.cvr * self.aov / self.cpm
-        elasticity = self.Elasticity.roas(budget / self.base_budget)
+            budget = self.budget
+        elasticity = self.Elasticity.roas(budget / self.base)
         return 1000 * self.cvr * self.aov / self.cpm * elasticity
 
     def exp_daily_sales(self, budget: float = None):
         if budget is None:
-            budget = self.base_budget
+            budget = self.budget
         return self.exp_roas(budget) * budget
 
-    def exp_tot_sales(self, budget: float = None):
-        return self.exp_daily_sales(budget) * self.duration
+    def exp_tot_sales(self, budget: float = None, duration: int = None):
+        if budget is None:
+            budget = self.budget
+        if duration is None:
+            duration = self.duration
+        return self.exp_daily_sales(budget) * duration
 
+    # ---------------------------------------- PERFORMANCE STATS ----------------------------------------
+    def exp_stats(self, budget: float = None, duration: int = None):
+        if budget is None:
+            budget = self.budget
+        if duration is None:
+            duration = self.duration
+        organic_sales = self.exp_tot_sales(budget, duration) if self.is_organic else 0
+        paid_sales = 0 if self.is_organic else self.exp_tot_sales(budget, duration)
+        paid_budget = 0 if self.is_organic else self.budget * self.duration
+        return PerformanceStats(
+            self.name,
+            "Expected",
+            organic_sales=organic_sales,
+            paid_sales=paid_sales,
+            paid_budget=paid_budget,
+        )
+
+    def sim_stats(self, budget: float = None, duration: int = None):
+        if budget is None and duration is None:
+            return self.sim_data._Sim_Stats
+        if budget is None:
+            budget = self.budget
+        if duration is None:
+            duration = self.duration
+        self.sim_outcomes(budget, duration)
+        return self.sim_data._Sim_Stats
+
+    def print_stats(self, budget: float = None, duration: int = None):
+        stats = PerformanceStats.from_list(
+            self.name,
+            [self.exp_stats(budget, duration), self.sim_stats(budget, duration)],
+        )
+        print(stats)
+
+    # ---------------------------------------- SIMULATION ----------------------------------------
     def sim_outcomes(
         self,
         budget: float = None,
-        start_date: str = "2025-01-01",
-        periods: int = 90,
+        start_date: str = None,
+        duration: int = None,
         cv: float = None,
+        verbose: bool = False,
         plot: bool = False,
     ):
+        if start_date is None:
+            start_date = self.start_date
+        if duration is None:
+            duration = self.duration
         if budget is None:
-            budget = self.base_budget
+            budget = self.budget
         if cv is None:
             cv = self.cv
-
-        date_range = pd.date_range(start=start_date, periods=periods, name="date")
+        print(f"Simulating {self}")
+        date_range = pd.date_range(start=start_date, periods=duration, name="date")
         df = pd.DataFrame(index=date_range)
-        df["name"] = self.name
+        df["base"] = self.base
         df["seasonality"] = self.Seasonality.values(date_range)
 
         if budget == 0:
-            df["base_budget"] = 0
+            df["budget"] = 0
         else:
             Budget = Lognormal(mean=budget, cv=cv, name=f"{self.name}_Budget")
-            df["base_budget"] = Budget.generate(periods)
-        df["budget"] = df["base_budget"] * df["seasonality"]
-        df["budget_relative_to_baseline"] = df["budget"] / self.base_budget
-        df["elasticity"] = self.Elasticity.roas(df["budget_relative_to_baseline"])
-        elasticity = df["elasticity"] ** (1 / 2)
+            df["budget"] = Budget.generate(duration) * df["seasonality"]
+        df["elastic_budget"] = df["budget"] / self.base
+        df["elastic_returns"] = self.Elasticity.roas(df["elastic_budget"])
+        elasticity = df["elastic_returns"] ** (1 / 2)
 
         df["imps"] = safe_poisson(
-            1000 * df["budget"] / self.CPM.generate(periods) / elasticity
+            1000 * df["budget"] / self.CPM.generate(duration) * elasticity
         )
-        df["convs"] = safe_binomial(df["imps"], self.CVR.generate(periods) * elasticity)
+        df["raw_convs"] = safe_binomial(
+            df["imps"], self.CVR.generate(duration) * elasticity
+        )
 
-        attr_convs = self.Delay.delay(df["convs"])
+        attr_convs = self.Delay.delay(df["raw_convs"])
         df = df.join(attr_convs, how="outer")
-        df["aov"] = self.AOV.generate(periods + self.Delay.duration - 1)
-        df["sales"] = df["attr_convs"] * df["aov"]
-        mask = df["budget"] > 0
-        df.loc[mask, "roas"] = df.loc[mask, "sales"] / df.loc[mask, "budget"]
-        df = df[df["attr_convs"] > 0].copy()
+        df["convs"] = df["attr_convs"].fillna(0)
+        df["aov"] = self.AOV.generate(len(df))
+        df["sales"] = df["convs"] * df["aov"]
+
+        df["date"] = df.index
+        df["name"] = self.name
+        df["is_organic"] = self.is_organic
+
+        self._Sim_Data = SimulatedData(df.reset_index(drop=True), self.name)
+        self._Sim_Stats = self._Sim_Data._Sim_Stats
+        if verbose:
+            self.print()
+
         if plot:
-            self.plot(df)
-        self._data = df
-        return df
+            self.plot()
 
-    def plot(self, df: pd.DataFrame = None):
-        if df is None:
-            df = self.data
+        return self._Sim_Data
 
-        def plot_seasonality(ax):
-            mu = df["seasonality"].mean()
-            cv = df["seasonality"].std(ddof=1) / mu
-            ax.plot(
-                df.index,
-                df["seasonality"],
-                color="orangered",
-                lw=2,
-                label=f"mu={mu:.0%}, cv={cv:.0%}",
-            )
+    def plot(self):
+        self.sim_data.plot(include_organic=True)
+        plt.show()
 
-            ax.axhline(mu, color="gray", lw=1, ls="--")
-            style(
-                ax,
-                "date",
-                "%",
-                "Date",
-                "Seasonality",
-                "Seasonality",
-            )
-
-        def plot_elasticity_curve(ax):
-            self.Elasticity.plot(ax=ax)
-
-        def plot_conversion_delay(ax):
-            self.Delay.plot(ax=ax)
-
-        def plot_outcomes(ax):
-            for k, v in {"budget": "orangered", "sales": "dodgerblue"}.items():
-                mu = df[k].mean()
-                cv = df[k].std(ddof=1) / mu
-                ax.scatter(df.index, df[k], alpha=0.3, color=v)
-                ax.plot(
-                    df[k].rolling(window=7).mean(),
-                    color=v,
-                    lw=2,
-                    label=f"{k}: mu={mu:,.0f}, cv={cv:.0%}",
-                )
-            style(
-                ax,
-                x_fmt="date",
-                x_label="Date",
-                title="Outcomes",
-                legend=True,
-            )
-
-        def plot_elasticity(ax):
-            ax.plot(
-                df.index,
-                df["budget_relative_to_baseline"],
-                color="orangered",
-                lw=2,
-                label="Spend Relative to Baseline",
-            )
-            ax.plot(
-                df.index, df["elasticity"], color="limegreen", lw=2, label="Elasticity"
-            )
-            style(
-                ax,
-                "date",
-                "%",
-                "Date",
-                "Elasticity",
-                "Elasticity",
-            )
-
-        def plot_roas(ax):
-            ax.scatter(df.index, df["roas"], alpha=0.3, color="limegreen")
-            mu = df["sales"].sum() / df["budget"].sum()
-            cv = df["roas"].std(ddof=1) / mu
-            ax.plot(
-                df["roas"].rolling(window=7).mean(),
-                color="limegreen",
-                lw=2,
-                label=f"mu={mu:.0%}, cv={cv:.0%}",
-            )
-            ax.axhline(mu, color="gray", lw=1, ls="--")
-            style(
-                ax,
-                "date",
-                "%",
-                "Date",
-                "ROAS",
-                "ROAS",
-            )
-
-        fig, axs = plt.subplots(2, 3, figsize=(16, 9))
-        fig.suptitle(self.name, fontsize=16)
+    def plot_elasticity_and_delay(self, max_x: float = 4):
+        fig, axs = plt.subplots(1, 2, figsize=(8, 4))
         ax = axs.ravel()
-
-        plot_elasticity_curve(ax[0])
-        plot_seasonality(ax[1])
-        plot_outcomes(ax[2])
-        plot_conversion_delay(ax[3])
-        plot_elasticity(ax[4])
-        plot_roas(ax[5])
+        self.Elasticity.plot(ax[1], max_x=max_x)
+        self.Delay.plot(ax[0])
         plt.show()
