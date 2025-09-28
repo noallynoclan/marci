@@ -328,7 +328,7 @@ class TestPortfolio:
             )
 
             # Mock the style function
-            with patch("marci.portfolio.style") as mock_style:
+            with patch("marci.utils.plot_utils.style") as mock_style:
                 portfolio.plot()
 
                 # Check that show was called
@@ -355,7 +355,7 @@ class TestPortfolio:
             )
 
             # Mock the style function
-            with patch("marci.portfolio.style") as mock_style:
+            with patch("marci.utils.plot_utils.style") as mock_style:
                 portfolio.plot()
 
                 # Check that show was called

@@ -3,4 +3,4 @@ __all__ = [
 ]
 
 # Follow semantic versioning: https://semver.org/
-__version__ = "0.2.0"
+__version__ = "0.2.1"
